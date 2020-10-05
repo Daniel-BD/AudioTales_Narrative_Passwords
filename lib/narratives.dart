@@ -6,7 +6,6 @@ class Story {
 
     for (int i = 0; i < chosenOptions.length; i++) {
       story.write(prompts[i].replaceAll('...', ''));
-      //story.write('\n');
       story.write(chosenOptions[i].replaceAll('...', ''));
       story.write('\n');
     }
