@@ -32,64 +32,87 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final double _componentWidth = min(300, MediaQuery.of(context).size.width - 32);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            children: [
-              SizedBox(height: 20),
-              AudioTalesLogo(),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _signIn ? signInWelcomeText : createNewAccountText,
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    SizedBox(height: 20),
-                    SizedBox(
-                      width: _componentWidth,
-                      child: CupertinoTextField(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 10.5),
-                        controller: _emailTextController,
-                        placeholder: 'Email',
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: primaryColor,
-                            width: 1.5,
-                          ),
+    return Container(
+      child: Stack(
+        children: [
+          Scaffold(
+            body: SafeArea(
+              child: Column(
+                children: [
+                  Column(
+                    children: [
+                      SizedBox(height: 20),
+                      AudioTalesLogo(),
+                    ],
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            Text(
+                              _signIn ? signInWelcomeText : createNewAccountText,
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            SizedBox(height: 20),
+                            SizedBox(
+                              width: _componentWidth,
+                              child: CupertinoTextField(
+                                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 10.5),
+                                controller: _emailTextController,
+                                placeholder: 'Email',
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                            ),
+                            SizedBox(height: 20),
+                            SizedBox(
+                              width: _componentWidth,
+                              child: CupertinoButton(
+                                child: Text(
+                                  startPasswordButtonText,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                color: primaryColor,
+                                borderRadius: BorderRadius.circular(4),
+                                minSize: 44,
+                                padding: EdgeInsets.all(0),
+                                onPressed: () {},
+                              ),
+                            ),
+                          ],
                         ),
-                        keyboardType: TextInputType.emailAddress,
                       ),
                     ),
-                    SizedBox(height: 20),
-                    SizedBox(
-                      width: _componentWidth,
-                      child: CupertinoButton(
-                        child: Text(
-                          startPasswordButtonText,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(4),
-                        minSize: 44,
-                        padding: EdgeInsets.all(0),
-                        onPressed: () {},
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              CreateAccountWidget(),
-              SizedBox(height: 20),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Material(
+                  child: CreateAccountWidget(),
+                ),
+                SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
