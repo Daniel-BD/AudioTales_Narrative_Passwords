@@ -70,6 +70,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final double _pageViewHeight = max(360, MediaQuery.of(context).size.height * 0.4);
+    final double _userNarrativeWidth = min(400, MediaQuery.of(context).size.width - 32);
 
     return Scaffold(
       appBar: CupertinoNavigationBar(
@@ -89,41 +90,63 @@ class _PasswordScreenState extends State<PasswordScreen> {
       ),
       body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            TextSection(),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SizedBox(
-                height: _pageViewHeight,
-                child: PageView(
-                  controller: _pageViewController,
-                  physics: NeverScrollableScrollPhysics(),
-                  children: [
-                    for (int i = 0; i < prompts.length; i++)
-                      NarrativeOptions(
-                        promptIndex: i,
-                        pageViewController: _pageViewController,
-                        pageTransitionDuration: _pageTransitionDuration,
-                        pageTransitionCurve: _pageTransitionCurve,
-                      ),
-                  ],
+            Column(
+              children: [
+                SizedBox(
+                  height: 10,
                 ),
-              ),
+                Text(
+                  _eventController.signIn ? signInPasswordHeadline : createPasswordHeadline,
+                  style: GoogleFonts.averiaSerifLibre(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 10),
+                SizedBox(
+                  width: _userNarrativeWidth,
+                  child: UsersNarrative(),
+                ),
+              ],
             ),
-            SmoothPageIndicator(
-              controller: _pageViewController,
-              count: 4,
-              effect: WormEffect(
-                activeDotColor: primaryColor,
-                dotColor: Color(0xFFC4C4C4),
-              ),
+            Column(
+              children: [
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SizedBox(
+                    height: _pageViewHeight,
+                    child: PageView(
+                      controller: _pageViewController,
+                      physics: NeverScrollableScrollPhysics(),
+                      children: [
+                        for (int i = 0; i < prompts.length; i++)
+                          NarrativeOptions(
+                            promptIndex: i,
+                            pageViewController: _pageViewController,
+                            pageTransitionDuration: _pageTransitionDuration,
+                            pageTransitionCurve: _pageTransitionCurve,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                SmoothPageIndicator(
+                  controller: _pageViewController,
+                  count: 4,
+                  effect: WormEffect(
+                    activeDotColor: primaryColor,
+                    dotColor: Color(0xFFC4C4C4),
+                  ),
+                ),
+                StepBackButton(
+                    pageViewController: _pageViewController,
+                    pageTransitionDuration: _pageTransitionDuration,
+                    pageTransitionCurve: _pageTransitionCurve),
+                SizedBox(height: 10),
+              ],
             ),
-            StepBackButton(
-                pageViewController: _pageViewController,
-                pageTransitionDuration: _pageTransitionDuration,
-                pageTransitionCurve: _pageTransitionCurve),
-            SizedBox(height: 10),
           ],
         ),
       ),
@@ -163,7 +186,7 @@ class NarrativeOptions extends StatelessWidget {
           SizedBox(
             width: _componentWidth,
             child: Text(
-              prompts[promptIndex],
+              prompts[promptIndex] + '... ',
               style: GoogleFonts.averiaSerifLibre(fontSize: 20, fontWeight: FontWeight.w600),
             ),
           ),
@@ -189,12 +212,18 @@ class NarrativeOptions extends StatelessWidget {
                           _eventController.stepForwardPrompt();
                           _eventController.addNarrativeOption(promptIndex, narrativeOptions[promptIndex].indexOf(option));
 
+                          /// If the button is pressed on any page that isn't the last page
                           if (_pageViewController.page.toInt() < prompts.length - 1) {
                             _pageViewController.animateToPage(
                               _eventController.currentPromptIndex.value,
                               duration: _pageTransitionDuration,
                               curve: _pageTransitionCurve,
                             );
+                          }
+
+                          /// else if the button is pressed on the last page (meaning the password input is complete)
+                          else if (_pageViewController.page.toInt() == prompts.length - 1) {
+                            //TODO: Password complete, gör något här.
                           }
                         },
                       ),
@@ -273,31 +302,38 @@ class StepBackButton extends StatelessWidget {
 }
 
 /// A text section with a title and the users currently inputted password.
-class TextSection extends StatelessWidget {
+class UsersNarrative extends StatelessWidget {
   final EventController _eventController = Get.find();
 
   @override
   Widget build(BuildContext context) {
-    //TODO: bygg klart denna widget
-    return Column(
-      children: [
-        SizedBox(
-          height: 20,
-        ),
-        Text(
-          _eventController.signIn ? signInPasswordHeadline : createPasswordHeadline,
-          style: GoogleFonts.averiaSerifLibre(fontSize: 20, fontWeight: FontWeight.w600),
-        ),
-        Text(
-          'here goes user story', //_eventController.password.completeStory(),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.orange,
-          ),
-        )
-      ],
-    );
+    return Obx(() {
+      final currentPromptIndex = _eventController.currentPromptIndex.value;
+
+      return Column(
+        children: [
+          for (int i = 0; i < currentPromptIndex; i++)
+            Row(
+              children: [
+                Text(
+                  prompts[i] + ' ',
+                  style: GoogleFonts.averiaSerifLibre(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  narrativeOptions[i][_eventController.password.chosenOptions[i]] + '... ',
+                  style: GoogleFonts.averiaSerifLibre(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      );
+    });
   }
 }
 

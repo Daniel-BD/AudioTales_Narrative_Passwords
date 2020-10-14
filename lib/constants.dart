@@ -19,36 +19,36 @@ const signInPasswordHeadline = 'Tell your Story';
 const createPasswordHeadline = 'Create your Story';
 
 const List<String> prompts = [
-  'Once upon a time... ',
-  'there was a... ',
-  'who found... ',
-  'belonging to... ',
+  'Once upon a time',
+  'there was a',
+  'who found',
+  'belonging to',
 ];
 
 const List<List<String>> narrativeOptions = [
   [
-    'in another era... ',
-    'deep underground... ',
-    'under the sea... ',
-    'in a galaxy far far away... ',
-    'in a faraway land... ',
-    'beyond the hills...',
+    'in another era',
+    'deep underground',
+    'under the sea',
+    'in a galaxy far far away',
+    'in a faraway land',
+    'beyond the hills',
   ],
   [
-    'graceful bear... ',
-    'misguided villain... ',
-    'creative ant... ',
-    'reclusive rabbit... ',
-    'university student... ',
-    'desperate dragon... ',
+    'graceful bear',
+    'misguided villain',
+    'creative ant',
+    'reclusive rabbit',
+    'university student',
+    'desperate dragon',
   ],
   [
-    'a magic pencil... ',
-    'a golden poodle... ',
-    'a broken wand... ',
-    'the seven dwarfs... ',
-    'a pink hat... ',
-    'the tesseract... ',
+    'a magic pencil',
+    'a golden poodle',
+    'a broken wand',
+    'the seven dwarfs',
+    'a pink hat',
+    'the tesseract',
   ],
   [
     'Gandalf.',
