@@ -12,11 +12,11 @@ class EventController extends GetxController {
   NarrativePassword get password => _event.password;
 
   /// Represents the current password prompt index to display to the user.
-  /// Should be limited between 0 and [options.length] - 1.
+  /// Should be limited between 0 and [narrativeOptions.length] - 1.
   var currentPromptIndex = 0.obs;
 
   void stepForwardPrompt() {
-    if (currentPromptIndex < options.length - 1) {
+    if (currentPromptIndex < narrativeOptions.length - 1) {
       currentPromptIndex.value++;
     }
   }
@@ -36,6 +36,8 @@ class EventController extends GetxController {
   void addNarrativeOption(int promptIndex, int optionIndex) {
     _event.password.chosenOptions[promptIndex] = optionIndex;
     update();
+
+    debugPrint('Narrative Password: ${_event.password.chosenOptions}');
   }
 }
 
@@ -59,8 +61,8 @@ class SignInOrUpEvent {
 }
 
 class NarrativePassword {
-  /// 4 ints with the users choice in the password, the number represents an index in [options]
-  final chosenOptions = List<int>(4);
+  /// 4 ints with the users choice in the password, the number represents an index in [narrativeOptions]
+  final chosenOptions = List<int>(prompts.length);
 
   /*String completeStory() {
     var story = StringBuffer();

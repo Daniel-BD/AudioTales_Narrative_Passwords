@@ -25,7 +25,7 @@ const List<String> prompts = [
   'belonging to... ',
 ];
 
-const List<List<String>> options = [
+const List<List<String>> narrativeOptions = [
   [
     'in another era... ',
     'deep underground... ',
