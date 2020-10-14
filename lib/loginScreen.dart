@@ -3,9 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:email_validator/email_validator.dart';
+import 'package:get/get.dart';
 
 import 'createNarrativeScreen.dart';
 import 'constants.dart';
+import 'models.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -13,19 +16,56 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final EventController eventController = Get.put(EventController());
+
   /// Whether to show a sign in screen (for existing users),
   /// or to show a screen for creating new accounts.
   bool _signIn = true;
 
   final _emailTextController = TextEditingController();
+  final _yourNameTextController = TextEditingController();
 
-  void _inputPassword({@required bool isNewAccount}) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreateStoryScreen(isNewAccount: isNewAccount),
-      ),
-    );
+  void _onPressedPasswordButton() {
+    String userName = _yourNameTextController.text.trim();
+    String email = _emailTextController.text.trim();
+    bool validEmail = EmailValidator.validate(email);
+
+    if (!validEmail) {
+      //TODO: feedback to user
+      debugPrint('Invalid Email');
+      return;
+    }
+
+    /// If the user is signing in with an existing account, we only need to validate that the email is a valid email address.
+    bool pushPasswordScreen = _signIn;
+
+    /// If the user is creating a new account we also need to validate that the given name is not empty.
+    if (!_signIn) {
+      pushPasswordScreen = userName.isNotEmpty;
+    }
+
+    if (pushPasswordScreen) {
+      _emailTextController.clear();
+      _yourNameTextController.clear();
+      FocusScope.of(context).unfocus();
+
+      final EventController eventController = Get.find();
+
+      eventController.newEvent(
+        SignInOrUpEvent(
+          signIn: _signIn,
+          email: email,
+          userName: _signIn ? null : userName,
+        ),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PasswordScreen(),
+        ),
+      );
+    }
   }
 
   @override
@@ -55,6 +95,27 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(fontSize: 18),
                             ),
                             SizedBox(height: 20),
+                            if (!_signIn)
+                              SizedBox(
+                                width: _componentWidth,
+                                child: CupertinoTextField(
+                                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 10.5),
+                                  controller: _yourNameTextController,
+                                  placeholder: 'Your Name',
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: primaryColor,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
+                              ),
+                            if (!_signIn)
+                              SizedBox(
+                                height: 20,
+                              ),
                             SizedBox(
                               width: _componentWidth,
                               child: CupertinoTextField(
@@ -76,9 +137,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: _componentWidth,
                               child: CupertinoButton(
                                 child: Text(
-                                  startPasswordButtonText,
+                                  _signIn ? startPasswordButtonText : continueToPasswordCreationButtonText,
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 15,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -86,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(4),
                                 minSize: 44,
                                 padding: EdgeInsets.all(0),
-                                onPressed: () {},
+                                onPressed: () => _onPressedPasswordButton(),
                               ),
                             ),
                           ],
@@ -106,7 +167,12 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Material(
-                  child: CreateAccountWidget(),
+                  child: SwitchBetweenSignInAndCreate(
+                    signIn: _signIn,
+                    onPressed: () => setState(() {
+                      _signIn = !_signIn;
+                    }),
+                  ),
                 ),
                 SizedBox(height: 20),
               ],
@@ -118,9 +184,16 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class CreateAccountWidget extends StatelessWidget {
-  const CreateAccountWidget({
+/// A clickable row of text letting the user switch between creating a new account or signing in with an existing.
+class SwitchBetweenSignInAndCreate extends StatelessWidget {
+  /// Whether to display prompt to create a new account, or to sign in with existing account.
+  final bool signIn;
+  final VoidCallback onPressed;
+
+  const SwitchBetweenSignInAndCreate({
     Key key,
+    @required this.signIn,
+    @required this.onPressed,
   }) : super(key: key);
 
   @override
@@ -129,7 +202,7 @@ class CreateAccountWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          dontHaveAccountText,
+          signIn ? dontHaveAccountText : alreadyHaveAccountText,
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
         SizedBox(width: 8),
@@ -138,7 +211,7 @@ class CreateAccountWidget extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                createAnAccountText,
+                signIn ? createAnAccountButtonText : signInButtonText,
                 style: TextStyle(
                   color: primaryColor,
                   fontSize: 14,
@@ -151,13 +224,14 @@ class CreateAccountWidget extends StatelessWidget {
               ),
             ],
           ),
-          onPressed: () {},
+          onPressed: onPressed,
         )
       ],
     );
   }
 }
 
+/// The AudioTales logo
 class AudioTalesLogo extends StatelessWidget {
   final String assetName = 'assets/logo.svg';
 
