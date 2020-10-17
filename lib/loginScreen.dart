@@ -15,8 +15,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final EventController eventController = Get.put(EventController());
-
   /// Whether to show a sign in screen (for existing users),
   /// or to show a screen for creating new accounts.
   bool _signIn = true;
@@ -24,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailTextController = TextEditingController();
   final _yourNameTextController = TextEditingController();
 
+  /// When pressing button to initiate password input.
   void _onPressedPasswordButton() {
     String userName = _yourNameTextController.text.trim();
     String email = _emailTextController.text.trim();
@@ -48,7 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _yourNameTextController.clear();
       FocusScope.of(context).unfocus();
 
-      final EventController eventController = Get.find();
+      Get.delete<EventController>(force: true);
+      final EventController eventController = Get.put(EventController());
 
       eventController.newEvent(
         SignInOrUpEvent(
@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _signIn ? startPasswordButtonText : continueToPasswordCreationButtonText,
                                   style: TextStyle(
                                     fontSize: 15,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                                 color: primaryColor,
