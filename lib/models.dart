@@ -12,7 +12,7 @@ class EventController extends GetxController {
   NarrativePassword get password => _event.password;
 
   /// Whether this event has a completed password, meaning the user has chosen answers for all prompts.
-  bool get completedPassword => !password.chosenOptions.contains(null);
+  bool get finishedPasswordInput => !password.chosenOptions.contains(null);
 
   /// Represents the current password prompt index to display to the user.
   /// Should be limited between 0 and [narrativeOptions.length] - 1.
@@ -45,8 +45,6 @@ class EventController extends GetxController {
   void addNarrativeOption(int promptIndex, int optionIndex) {
     _event.password.chosenOptions[promptIndex] = optionIndex;
     update();
-
-    debugPrint('Narrative Password: ${_event.password.chosenOptions}');
   }
 }
 
@@ -74,7 +72,7 @@ class NarrativePassword {
   NarrativePassword() : chosenOptions = List<int>(prompts.length);
 
   /// 4 ints with the users choice in the password, the number represents an index in [narrativeOptions]
-  final chosenOptions;
+  final List<int> chosenOptions;
 
   @override
   String toString() {

@@ -103,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   controller: _yourNameTextController,
                                   placeholder: 'Your Name',
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(4),
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: primaryColor,
                                       width: 1.5,
@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 controller: _emailTextController,
                                 placeholder: 'Email',
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
+                                  borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: primaryColor,
                                     width: 1.5,
@@ -144,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 color: primaryColor,
-                                borderRadius: BorderRadius.circular(4),
+                                //borderRadius: BorderRadius.circular(4),
                                 minSize: 44,
                                 padding: EdgeInsets.all(0),
                                 onPressed: () => _onPressedPasswordButton(),

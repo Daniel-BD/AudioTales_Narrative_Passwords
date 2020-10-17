@@ -10,6 +10,7 @@ import 'models.dart';
 import 'myBooksScreen.dart';
 import 'loginScreen.dart';
 import 'backend.dart';
+import 'widget_components/AudioTalesWideButton.dart';
 
 class PasswordScreen extends StatefulWidget {
   @override
@@ -50,78 +51,99 @@ class _PasswordScreenState extends State<PasswordScreen> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              child: SizedBox(
-                width: _userNarrativeWidth,
-                child: Obx(() {
-                  final currentPromptIndex = _eventController.currentPromptIndex.value;
+        child: GetBuilder<EventController>(builder: (_) {
+          final finishedPasswordInput =
+              (_eventController.currentPromptIndex.value == prompts.length - 1 && _eventController.finishedPasswordInput);
 
-                  return Scrollbar(
-                    isAlwaysShown: (!_eventController.signIn && currentPromptIndex == 0) ? true : false,
-                    controller: _scrollController,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: ListView(
-                        controller: _scrollController,
-                        children: [
-                          SizedBox(height: 10),
-                          UsersNarrative(),
-                        ],
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (!_eventController.signIn && _eventController.finishedPasswordInput) AudioTalesLogo(),
+              Flexible(
+                child: SizedBox(
+                  width: _userNarrativeWidth,
+                  child: Obx(() {
+                    final currentPromptIndex = _eventController.currentPromptIndex.value;
+
+                    return Scrollbar(
+                      isAlwaysShown: (!_eventController.signIn && currentPromptIndex == 0) ? true : false,
+                      controller: _scrollController,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: SingleChildScrollView(
+                          controller: _scrollController,
+                          child: Column(
+                            children: [
+                              if (finishedPasswordInput)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 20),
+                                  child: Text(
+                                    'Your created story is:', //TODO: Make const string
+                                    style: GoogleFonts.averiaSerifLibre(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              SizedBox(height: 10),
+                              UserNarrative(),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
-            ),
-            Column(
-              children: [
-                SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SizedBox(
-                    height: _pageViewHeight,
-                    child: PageView(
-                      controller: _pageViewController,
-                      physics: NeverScrollableScrollPhysics(),
+              finishedPasswordInput
+                  ? ConfirmCreatedPassword()
+                  : Column(
                       children: [
-                        for (int i = 0; i < prompts.length; i++)
-                          NarrativeOptions(
-                            promptIndex: i,
+                        SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: SizedBox(
+                            height: _pageViewHeight,
+                            child: PageView(
+                              controller: _pageViewController,
+                              physics: NeverScrollableScrollPhysics(),
+                              children: [
+                                for (int i = 0; i < prompts.length; i++)
+                                  NarrativeOptions(
+                                    promptIndex: i,
+                                    pageViewController: _pageViewController,
+                                    pageTransitionDuration: _pageTransitionDuration,
+                                    pageTransitionCurve: _pageTransitionCurve,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SmoothPageIndicator(
+                          controller: _pageViewController,
+                          count: 4,
+                          effect: WormEffect(
+                            activeDotColor: indicatorColor,
+                            dotColor: inactiveColor,
+                          ),
+                        ),
+                        StepBackButton(
                             pageViewController: _pageViewController,
                             pageTransitionDuration: _pageTransitionDuration,
-                            pageTransitionCurve: _pageTransitionCurve,
-                          ),
+                            pageTransitionCurve: _pageTransitionCurve),
+                        SizedBox(height: 10),
                       ],
                     ),
-                  ),
-                ),
-                SmoothPageIndicator(
-                  controller: _pageViewController,
-                  count: 4,
-                  effect: WormEffect(
-                    activeDotColor: indicatorColor,
-                    dotColor: inactiveColor,
-                  ),
-                ),
-                StepBackButton(
-                    pageViewController: _pageViewController,
-                    pageTransitionDuration: _pageTransitionDuration,
-                    pageTransitionCurve: _pageTransitionCurve),
-                SizedBox(height: 10),
-              ],
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }
 }
 
 /// A text section with the users currently inputted narrative password.
-class UsersNarrative extends StatelessWidget {
+class UserNarrative extends StatelessWidget {
   final EventController _eventController = Get.find();
 
   @override
@@ -129,15 +151,19 @@ class UsersNarrative extends StatelessWidget {
     final _signIn = _eventController.signIn;
 
     return GetBuilder<EventController>(
-      builder: (_) {
+      builder: (eventController) {
         var currentPromptIndex = _eventController.currentPromptIndex.value;
+        final finishedPasswordInput = (currentPromptIndex == prompts.length - 1 && _eventController.finishedPasswordInput);
 
-        if (currentPromptIndex == prompts.length - 1 && _eventController.password.chosenOptions.last != null) {
+        if (finishedPasswordInput) {
           /// This means the user is on the last prompt and has chosen an alternative.
           currentPromptIndex++;
         }
 
+        final fontSize = finishedPasswordInput ? 18.0 : 16.0;
+
         return Column(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             if (!_signIn && currentPromptIndex == 0)
               Text(
@@ -152,14 +178,14 @@ class UsersNarrative extends StatelessWidget {
                   Text(
                     prompts[i] + ' ',
                     style: GoogleFonts.averiaSerifLibre(
-                      fontSize: 16,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                   Text(
                     narrativeOptions[i][_eventController.password.chosenOptions[i]] + '... ',
                     style: GoogleFonts.averiaSerifLibre(
-                      fontSize: 16,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -168,6 +194,45 @@ class UsersNarrative extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class ConfirmCreatedPassword extends StatelessWidget {
+  final EventController _eventController = Get.find();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          isPasswordCorrectQuestionText,
+          style: TextStyle(
+            fontSize: 18,
+          ),
+        ),
+        SizedBox(height: 30),
+        AudioTalesWideButton(
+          label: confirmCreatedPasswordButtonText,
+          onPressed: () {},
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
+        SizedBox(height: 20),
+        CupertinoButton(
+          padding: EdgeInsets.symmetric(horizontal: 0),
+          child: Text(
+            regretCreatedPasswordButtonText,
+            style: TextStyle(
+              color: primaryColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          onPressed: () {},
+        ),
+        SizedBox(height: 20),
+      ],
     );
   }
 }
@@ -194,7 +259,7 @@ class NarrativeOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double _componentWidth = min(300, MediaQuery.of(context).size.width - 32);
+    final double componentWidth = min(340, MediaQuery.of(context).size.width - 64);
 
     return Align(
       alignment: Alignment.bottomCenter,
@@ -202,7 +267,7 @@ class NarrativeOptions extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           SizedBox(
-            width: _componentWidth,
+            width: componentWidth,
             child: Text(
               prompts[promptIndex] + '... ',
               style: GoogleFonts.averiaSerifLibre(fontSize: 20, fontWeight: FontWeight.w600),
@@ -210,7 +275,7 @@ class NarrativeOptions extends StatelessWidget {
           ),
           SizedBox(height: 8),
           SizedBox(
-            width: _componentWidth,
+            width: componentWidth,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -218,15 +283,10 @@ class NarrativeOptions extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      CupertinoButton(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        color: primaryColor,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(option),
-                          //TODO: TextStyle för dessa knappar
-                        ),
-                        onPressed: () {
+                      AudioTalesWideButton(
+                        label: option,
+                        leftAlign: true,
+                        onPressed: () async {
                           _eventController.stepForwardPrompt();
                           _eventController.addNarrativeOption(promptIndex, narrativeOptions[promptIndex].indexOf(option));
 
@@ -241,9 +301,28 @@ class NarrativeOptions extends StatelessWidget {
 
                           /// else if the button is pressed on the last page (meaning the password input is complete)
                           else if (_pageViewController.page.toInt() == prompts.length - 1) {
-                            if (_eventController.completedPassword) {
+                            if (_eventController.finishedPasswordInput) {
                               _eventController.loading.value = true;
-                              validatePassword(_eventController.email, _eventController.password);
+
+                              /// If this is a sign in event
+                              if (_eventController.signIn) {
+                                final validPassword = await validatePassword(_eventController.email, _eventController.password);
+                                _eventController.loading.value = false;
+
+                                if (validPassword) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => MyBooksScreen(),
+                                    ),
+                                  );
+                                } else {
+                                  // TODO: Show the user feedback that the signIn attempt failed.
+                                }
+                              }
+
+                              /// else this is a 'create new account' event
+                              else {}
                             }
                           }
                         },
@@ -310,7 +389,7 @@ class StepBackButton extends StatelessWidget {
                 color: primaryColor,
               ),
               Text(
-                currentPromptIndex > 0 ? prompts[currentPromptIndex - 1] : '',
+                currentPromptIndex > 0 ? prompts[currentPromptIndex - 1] + '...' : '',
                 style: TextStyle(color: primaryColor, fontSize: 14, fontWeight: FontWeight.w600),
               ),
             ],
