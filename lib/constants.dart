@@ -31,9 +31,13 @@ const createPasswordScreenTitle = 'Create Password';
 const signInPasswordHeadline = 'Tell your Story';
 const createPasswordHeadline = 'Create your Story';
 
+const yourCreatedStoryText = 'Your created story is:';
 const isPasswordCorrectQuestionText = 'Do you want this as password?';
 const confirmCreatedPasswordButtonText = 'Yes';
 const regretCreatedPasswordButtonText = 'No, let me create another one';
+const repeatPasswordToConfirm = 'Please repeat your story\nto confirm it as your password';
+const tryAgainText = 'Oops! Try again.';
+const triesLeftText = 'tries left.';
 
 const createPasswordInstructionText =
     'You will now create your own narrative password! It is a simple process, really.\n\nFor each prompt you are presented, there will be a number of alternatives available to build on to the story. Choose an alternative to create YOUR story and to proceed to the next section.\n\nAt the end you can see your entire story, and this will be your narrative password to memorize!\n';

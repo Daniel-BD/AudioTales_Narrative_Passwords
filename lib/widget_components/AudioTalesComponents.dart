@@ -30,6 +30,7 @@ class AudioTalesWideButton extends StatelessWidget {
   final double fontSize;
   final FontWeight fontWeight;
   final bool leftAlign;
+  final bool errorColorBackground;
 
   const AudioTalesWideButton({
     Key key,
@@ -38,6 +39,7 @@ class AudioTalesWideButton extends StatelessWidget {
     this.fontSize = 17,
     this.fontWeight = FontWeight.w500,
     this.leftAlign = false,
+    this.errorColorBackground = false,
   }) : super(key: key);
 
   @override
@@ -48,7 +50,7 @@ class AudioTalesWideButton extends StatelessWidget {
       width: buttonWidth,
       child: CupertinoButton(
         padding: EdgeInsets.symmetric(horizontal: 16),
-        color: primaryColor,
+        color: errorColorBackground ? destructiveColor : primaryColor,
         onPressed: onPressed,
         child: Align(
           alignment: leftAlign ? Alignment.centerLeft : Alignment.center,

@@ -8,7 +8,6 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'constants.dart';
 import 'models.dart';
 import 'myBooksScreen.dart';
-import 'loginScreen.dart';
 import 'backend.dart';
 import 'widget_components/AudioTalesComponents.dart';
 
@@ -27,7 +26,6 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double _pageViewHeight = max(360, MediaQuery.of(context).size.height * 0.4);
     final double _userNarrativeWidth = min(400, MediaQuery.of(context).size.width - 16);
 
     return Scaffold(
@@ -55,10 +53,13 @@ class _PasswordScreenState extends State<PasswordScreen> {
           final finishedPasswordInput =
               (_eventController.currentPromptIndex.value == prompts.length - 1 && _eventController.finishedPasswordInput);
 
+          final repeatingPassword = _eventController.repeatingCreatedPassword;
+
           return Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (!_eventController.signIn && _eventController.finishedPasswordInput) AudioTalesLogo(),
+              if (!_eventController.signIn && _eventController.finishedPasswordInput && !_eventController.repeatingCreatedPassword)
+                AudioTalesLogo(),
               Flexible(
                 child: SizedBox(
                   width: _userNarrativeWidth,
@@ -74,15 +75,16 @@ class _PasswordScreenState extends State<PasswordScreen> {
                           controller: _scrollController,
                           child: Column(
                             children: [
-                              if (finishedPasswordInput)
+                              if (finishedPasswordInput && !_eventController.signIn || repeatingPassword)
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 20),
                                   child: Text(
-                                    'Your created story is:', //TODO: Make const string
+                                    repeatingPassword ? repeatPasswordToConfirm : yourCreatedStoryText,
                                     style: GoogleFonts.averiaSerifLibre(
-                                      fontSize: 24,
+                                      fontSize: repeatingPassword ? 17 : 24,
                                       fontWeight: FontWeight.w500,
                                     ),
+                                    textAlign: repeatingPassword ? TextAlign.center : null,
                                   ),
                                 ),
                               SizedBox(height: 10),
@@ -95,29 +97,34 @@ class _PasswordScreenState extends State<PasswordScreen> {
                   }),
                 ),
               ),
-              finishedPasswordInput
+              finishedPasswordInput && !_eventController.signIn
                   ? ConfirmCreatedPassword()
                   : Column(
                       children: [
                         SizedBox(height: 4),
                         Align(
                           alignment: Alignment.bottomCenter,
-                          child: SizedBox(
-                            height: _pageViewHeight,
-                            child: PageView(
-                              controller: _pageViewController,
-                              physics: NeverScrollableScrollPhysics(),
-                              children: [
-                                for (int i = 0; i < prompts.length; i++)
-                                  NarrativeOptions(
-                                    promptIndex: i,
-                                    pageViewController: _pageViewController,
-                                    pageTransitionDuration: _pageTransitionDuration,
-                                    pageTransitionCurve: _pageTransitionCurve,
-                                  ),
-                              ],
-                            ),
-                          ),
+                          child: GetBuilder<EventController>(builder: (_) {
+                            final double _pageViewHeight =
+                                max(_eventController.repeatingCreatedPassword ? 380 : 360, MediaQuery.of(context).size.height * 0.4);
+
+                            return SizedBox(
+                              height: _pageViewHeight,
+                              child: PageView(
+                                controller: _pageViewController,
+                                physics: NeverScrollableScrollPhysics(),
+                                children: [
+                                  for (int i = 0; i < prompts.length; i++)
+                                    NarrativeOptions(
+                                      promptIndex: i,
+                                      pageViewController: _pageViewController,
+                                      pageTransitionDuration: _pageTransitionDuration,
+                                      pageTransitionCurve: _pageTransitionCurve,
+                                    ),
+                                ],
+                              ),
+                            );
+                          }),
                         ),
                         SmoothPageIndicator(
                           controller: _pageViewController,
@@ -154,18 +161,19 @@ class UserNarrative extends StatelessWidget {
       builder: (eventController) {
         var currentPromptIndex = _eventController.currentPromptIndex.value;
         final finishedPasswordInput = (currentPromptIndex == prompts.length - 1 && _eventController.finishedPasswordInput);
+        final repeatingPassword = _eventController.repeatingCreatedPassword;
 
         if (finishedPasswordInput) {
           /// This means the user is on the last prompt and has chosen an alternative.
           currentPromptIndex++;
         }
 
-        final fontSize = finishedPasswordInput ? 18.0 : 16.0;
+        final fontSize = finishedPasswordInput /*&& !repeatingPassword*/ ? 18.0 : 16.0;
 
         return Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            if (!_signIn && currentPromptIndex == 0)
+            if (!_signIn && currentPromptIndex == 0 && !repeatingPassword)
               Text(
                 createPasswordInstructionText,
                 style: TextStyle(
@@ -214,7 +222,10 @@ class ConfirmCreatedPassword extends StatelessWidget {
         SizedBox(height: 24),
         AudioTalesWideButton(
           label: confirmCreatedPasswordButtonText,
-          onPressed: () {},
+          onPressed: () {
+            // TODO: When confirming password, what happens?
+            _eventController.repeatingCreatedPassword = true;
+          },
           fontSize: 20,
           fontWeight: FontWeight.w700,
         ),
@@ -240,7 +251,7 @@ class ConfirmCreatedPassword extends StatelessWidget {
 }
 
 /// Displays the current prompt and the narrative options as buttons.
-class NarrativeOptions extends StatelessWidget {
+class NarrativeOptions extends StatefulWidget {
   NarrativeOptions({
     Key key,
     @required this.promptIndex,
@@ -257,21 +268,54 @@ class NarrativeOptions extends StatelessWidget {
   final PageController _pageViewController;
   final Duration _pageTransitionDuration;
   final Cubic _pageTransitionCurve;
+
+  @override
+  _NarrativeOptionsState createState() => _NarrativeOptionsState();
+}
+
+class _NarrativeOptionsState extends State<NarrativeOptions> {
   final EventController _eventController = Get.find();
+
+  /// If this the user is repeating their newly created password and gets an option wrong, this should set to true.
+  var _didNotMatch = false;
+  var _triesLeft = 3;
+  var _wrongGuesses = List<String>();
 
   @override
   Widget build(BuildContext context) {
     final double componentWidth = min(340, MediaQuery.of(context).size.width - 64);
+    final repeatingPassword = _eventController.repeatingCreatedPassword;
+    final currentPromptIndex = _eventController.currentPromptIndex.value;
 
     return Align(
       alignment: Alignment.bottomCenter,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          if (repeatingPassword)
+            Visibility(
+              visible: _didNotMatch,
+              maintainSize: true,
+              maintainState: true,
+              maintainAnimation: true,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    tryAgainText + ' $_triesLeft ' + triesLeftText,
+                    style: TextStyle(
+                      color: destructiveColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           SizedBox(
             width: componentWidth,
             child: Text(
-              prompts[promptIndex] + '... ',
+              prompts[widget.promptIndex] + '... ',
               style: GoogleFonts.averiaSerifLibre(fontSize: 20, fontWeight: FontWeight.w600),
             ),
           ),
@@ -281,28 +325,54 @@ class NarrativeOptions extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (String option in narrativeOptions[promptIndex])
+                for (String option in narrativeOptions[widget.promptIndex])
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       AudioTalesWideButton(
                         label: option,
                         leftAlign: true,
+                        errorColorBackground: _wrongGuesses.contains(option) ||
+                            !_eventController.optionIsMatching(currentPromptIndex) &&
+                                _eventController.repeatedPassword.chosenOptions[currentPromptIndex] ==
+                                    narrativeOptions[currentPromptIndex].indexOf(option),
                         onPressed: () async {
-                          _eventController.stepForwardPrompt();
-                          _eventController.addNarrativeOption(promptIndex, narrativeOptions[promptIndex].indexOf(option));
+                          final result = _eventController.addNarrativeOption(
+                            widget.promptIndex,
+                            narrativeOptions[widget.promptIndex].indexOf(option),
+                            isRepeatingPassword: repeatingPassword,
+                          );
+
+                          if (result) {
+                            _eventController.stepForwardPrompt();
+                            _didNotMatch = false;
+                          } else {
+                            setState(() {
+                              _didNotMatch = true;
+                              _triesLeft--;
+                              _wrongGuesses.add(option);
+                              if (_triesLeft <= 0) {
+                                _eventController.clearPassword(clearRepeatingPassword: true);
+                                _eventController.repeatingCreatedPassword = false;
+                                /*_didNotMatch = false;
+                                _triesLeft = 3;
+                                _wrongGuesses.clear(); */
+                                //TODO: Här ska man komma till review. Vore bra att kunna logga att användaren inte lyckades minnas lösenordet...
+                              }
+                            });
+                          }
 
                           /// If the button is pressed on any page that isn't the last page
-                          if (_pageViewController.page.toInt() < prompts.length - 1) {
-                            _pageViewController.animateToPage(
+                          if (widget._pageViewController.page.toInt() < prompts.length - 1) {
+                            widget._pageViewController.animateToPage(
                               _eventController.currentPromptIndex.value,
-                              duration: _pageTransitionDuration,
-                              curve: _pageTransitionCurve,
+                              duration: widget._pageTransitionDuration,
+                              curve: widget._pageTransitionCurve,
                             );
                           }
 
                           /// else if the button is pressed on the last page (meaning the password input is complete)
-                          else if (_pageViewController.page.toInt() == prompts.length - 1) {
+                          else if (widget._pageViewController.page.toInt() == prompts.length - 1) {
                             if (_eventController.finishedPasswordInput) {
                               _eventController.loading.value = true;
 
@@ -324,7 +394,9 @@ class NarrativeOptions extends StatelessWidget {
                               }
 
                               /// else this is a 'create new account' event
-                              else {}
+                              else {
+                                //TODO: create new account name, store password here?
+                              }
                             }
                           }
                         },
@@ -363,9 +435,10 @@ class StepBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final currentPromptIndex = _eventController.currentPromptIndex.value;
+      final repeatingPassword = _eventController.repeatingCreatedPassword;
 
       return Visibility(
-        visible: currentPromptIndex > 0,
+        visible: currentPromptIndex > 0 && !repeatingPassword,
         maintainSize: true,
         maintainAnimation: true,
         maintainState: true,
