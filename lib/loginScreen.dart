@@ -1,14 +1,13 @@
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:get/get.dart';
 
 import 'createNarrativeScreen.dart';
 import 'constants.dart';
 import 'models.dart';
+import 'widget_components/AudioTalesComponents.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -226,24 +225,6 @@ class SwitchBetweenSignInAndCreate extends StatelessWidget {
           ),
           onPressed: onPressed,
         )
-      ],
-    );
-  }
-}
-
-/// The AudioTales logo
-class AudioTalesLogo extends StatelessWidget {
-  final String assetName = 'assets/logo.svg';
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SvgPicture.asset(assetName, semanticsLabel: 'AudioTales Logo - an image of a book'),
-        Text(
-          'AudioTales',
-          style: GoogleFonts.averiaSerifLibre(fontSize: 36),
-        ),
       ],
     );
   }

@@ -31,7 +31,7 @@ const createPasswordScreenTitle = 'Create Password';
 const signInPasswordHeadline = 'Tell your Story';
 const createPasswordHeadline = 'Create your Story';
 
-const isPasswordCorrectQuestionText = 'Is this correct?';
+const isPasswordCorrectQuestionText = 'Do you want this as password?';
 const confirmCreatedPasswordButtonText = 'Yes';
 const regretCreatedPasswordButtonText = 'No, let me create another one';
 

@@ -10,7 +10,7 @@ import 'models.dart';
 import 'myBooksScreen.dart';
 import 'loginScreen.dart';
 import 'backend.dart';
-import 'widget_components/AudioTalesWideButton.dart';
+import 'widget_components/AudioTalesComponents.dart';
 
 class PasswordScreen extends StatefulWidget {
   @override
@@ -211,7 +211,7 @@ class ConfirmCreatedPassword extends StatelessWidget {
             fontSize: 18,
           ),
         ),
-        SizedBox(height: 30),
+        SizedBox(height: 24),
         AudioTalesWideButton(
           label: confirmCreatedPasswordButtonText,
           onPressed: () {},
@@ -229,7 +229,9 @@ class ConfirmCreatedPassword extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          onPressed: () {},
+          onPressed: () {
+            _eventController.clearPassword();
+          },
         ),
         SizedBox(height: 20),
       ],

@@ -46,6 +46,18 @@ class EventController extends GetxController {
     _event.password.chosenOptions[promptIndex] = optionIndex;
     update();
   }
+
+  /// Clears the currently made password options. Example usage is when a newly created password is to be confirmed and the user
+  /// doesn't want to keep the created password, then this can be used to fully clear it.
+  void clearPassword() {
+    currentPromptIndex.value = 0;
+
+    for (int i = 0; i < _event.password.chosenOptions.length; i++) {
+      _event.password.chosenOptions[i] = null;
+    }
+
+    update();
+  }
 }
 
 class SignInOrUpEvent {
