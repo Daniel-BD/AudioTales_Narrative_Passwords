@@ -11,19 +11,28 @@ class EventController extends GetxController {
   String get userName => _event.userName;
   NarrativePassword get password => _event.password;
 
+  /// Whether this event has a completed password, meaning the user has chosen answers for all prompts.
+  bool get completedPassword => !password.chosenOptions.contains(null);
+
   /// Represents the current password prompt index to display to the user.
   /// Should be limited between 0 and [narrativeOptions.length] - 1.
-  var currentPromptIndex = 0.obs;
+  RxInt currentPromptIndex = 0.obs;
+
+  /// Whether some 'loading' action is taking place, such as talking to server to validate password.
+  RxBool loading = false.obs;
 
   void stepForwardPrompt() {
     if (currentPromptIndex < narrativeOptions.length - 1) {
       currentPromptIndex.value++;
+      update();
     }
   }
 
   void stepBackPrompt() {
     if (currentPromptIndex > 0) {
+      password.chosenOptions[currentPromptIndex.value] = null;
       currentPromptIndex.value--;
+      update();
     }
   }
 
@@ -61,18 +70,25 @@ class SignInOrUpEvent {
 }
 
 class NarrativePassword {
-  /// 4 ints with the users choice in the password, the number represents an index in [narrativeOptions]
-  final chosenOptions = List<int>(prompts.length);
+  NarrativePassword.fromList(this.chosenOptions);
+  NarrativePassword() : chosenOptions = List<int>(prompts.length);
 
-  /*String completeStory() {
-    var story = StringBuffer();
+  /// 4 ints with the users choice in the password, the number represents an index in [narrativeOptions]
+  final chosenOptions;
+
+  @override
+  String toString() {
+    var password = StringBuffer();
 
     for (int i = 0; i < chosenOptions.length; i++) {
-      story.write(prompts[i].replaceAll('...', ''));
-      story.write(chosenOptions[i].replaceAll('...', ''));
-      story.write('\n');
+      password.write(prompts[i] + '%%' + narrativeOptions[i][chosenOptions[i]]);
+      if (i == chosenOptions.length - 1) {
+        break;
+      }
+      password.write('++');
     }
 
-    return story.toString();
-  }*/
+    debugPrint('password.toString: ${password.toString()}');
+    return password.toString();
+  }
 }

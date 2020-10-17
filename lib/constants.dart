@@ -2,6 +2,19 @@ import 'package:flutter/material.dart';
 
 const primaryColor = Color(0xFFCF88CC);
 const appBarColor = Colors.transparent;
+const destructiveColor = Color(0xFFED4B40);
+const inactiveColor = Color(0xFFC4C4C4);
+
+const secondColor = Color(0xFF1B2432);
+const backgroundColor = Color(0xFFE6E6FF);
+const backgroundTwoColor = Color(0xFFD0DFDA);
+const backgroundColorGood = Color(0xFFF7EDC9);
+
+const secondColorTwo = Color(0xFF820263);
+const indicatorColor = Color(0xFF0D324D);
+const secondColorFour = Color(0xFF38726C);
+const secondColorFive = Color(0xFF6C9A8B);
+const secondColorSix = Color(0xFF48639C);
 
 const signInWelcomeText = 'Sign in to your account';
 const createNewAccountText = 'Create account';
@@ -17,6 +30,9 @@ const createPasswordScreenTitle = 'Create Password';
 
 const signInPasswordHeadline = 'Tell your Story';
 const createPasswordHeadline = 'Create your Story';
+
+const createPasswordInstructionText =
+    'You will now create your own narrative password! It is a simple process, really.\n\nFor each prompt you are presented, there will be a number of alternatives available to build on to the story. Choose an alternative to create YOUR story and to proceed to the next section.\n\nAt the end you can see your entire story, and this will be your narrative password to memorize!\n';
 
 const List<String> prompts = [
   'Once upon a time',

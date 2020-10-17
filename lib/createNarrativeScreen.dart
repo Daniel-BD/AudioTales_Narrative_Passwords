@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -10,6 +9,7 @@ import 'constants.dart';
 import 'models.dart';
 import 'myBooksScreen.dart';
 import 'loginScreen.dart';
+import 'backend.dart';
 
 class PasswordScreen extends StatefulWidget {
   @override
@@ -22,97 +22,63 @@ class _PasswordScreenState extends State<PasswordScreen> {
   final _pageTransitionDuration = Duration(milliseconds: 600);
   final _pageTransitionCurve = Curves.easeInOut;
   final _pageViewController = PageController(initialPage: 0);
-
-  /// Persists the created password, meaning it's saved so that we can access it even if the app is shut down and restarted.
-  /// Returns true if successful.
-  Future<bool> _savePassword() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    //return await prefs.setStringList('password', _eventController.password.chosenOptions);
-  }
-
-  /// Controls if the inputted password matches the persisted (saved) password.
-  /// Returns true if password matches.
-  Future<bool> _controlPassword() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList('password').toString() == _eventController.password.chosenOptions.toString();
-  }
-
-  void _onPasswordEntered() async {
-    if (!_eventController.signIn) {
-      var success = await _savePassword();
-
-      if (!success) {
-        return;
-      }
-
-      await Future.delayed(Duration(seconds: 2));
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoginScreen(),
-        ),
-      );
-    } else if (_eventController.signIn) {
-      var success = await _controlPassword();
-
-      if (success) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MyBooksScreen(),
-          ),
-        );
-      }
-    }
-  }
+  final _scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
     final double _pageViewHeight = max(360, MediaQuery.of(context).size.height * 0.4);
-    final double _userNarrativeWidth = min(400, MediaQuery.of(context).size.width - 32);
+    final double _userNarrativeWidth = min(400, MediaQuery.of(context).size.width - 16);
 
     return Scaffold(
-      appBar: CupertinoNavigationBar(
-        leading: CupertinoButton(
-          padding: EdgeInsets.all(0),
-          child: Text(
-            'Cancel',
-            style: TextStyle(color: CupertinoColors.destructiveRed),
+      appBar: AppBar(
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          _eventController.signIn ? signInPasswordHeadline : createPasswordHeadline,
+          style: GoogleFonts.averiaSerifLibre(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
-          onPressed: () {
-            Navigator.of(context).maybePop();
-          },
         ),
-        middle: Text(
-          _eventController.signIn ? signInPasswordScreenTitle : createPasswordScreenTitle,
+        leading: CupertinoButton(
+          child: Icon(
+            CupertinoIcons.clear_thick,
+            size: 30,
+            color: destructiveColor,
+          ),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
       body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              children: [
-                SizedBox(
-                  height: 10,
-                ),
-                Text(
-                  _eventController.signIn ? signInPasswordHeadline : createPasswordHeadline,
-                  style: GoogleFonts.averiaSerifLibre(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 10),
-                SizedBox(
-                  width: _userNarrativeWidth,
-                  child: UsersNarrative(),
-                ),
-              ],
+            Flexible(
+              child: SizedBox(
+                width: _userNarrativeWidth,
+                child: Obx(() {
+                  final currentPromptIndex = _eventController.currentPromptIndex.value;
+
+                  return Scrollbar(
+                    isAlwaysShown: (!_eventController.signIn && currentPromptIndex == 0) ? true : false,
+                    controller: _scrollController,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: ListView(
+                        controller: _scrollController,
+                        children: [
+                          SizedBox(height: 10),
+                          UsersNarrative(),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
             ),
             Column(
               children: [
+                SizedBox(height: 4),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: SizedBox(
@@ -136,8 +102,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
                   controller: _pageViewController,
                   count: 4,
                   effect: WormEffect(
-                    activeDotColor: primaryColor,
-                    dotColor: Color(0xFFC4C4C4),
+                    activeDotColor: indicatorColor,
+                    dotColor: inactiveColor,
                   ),
                 ),
                 StepBackButton(
@@ -150,6 +116,58 @@ class _PasswordScreenState extends State<PasswordScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A text section with the users currently inputted narrative password.
+class UsersNarrative extends StatelessWidget {
+  final EventController _eventController = Get.find();
+
+  @override
+  Widget build(BuildContext context) {
+    final _signIn = _eventController.signIn;
+
+    return GetBuilder<EventController>(
+      builder: (_) {
+        var currentPromptIndex = _eventController.currentPromptIndex.value;
+
+        if (currentPromptIndex == prompts.length - 1 && _eventController.password.chosenOptions.last != null) {
+          /// This means the user is on the last prompt and has chosen an alternative.
+          currentPromptIndex++;
+        }
+
+        return Column(
+          children: [
+            if (!_signIn && currentPromptIndex == 0)
+              Text(
+                createPasswordInstructionText,
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            for (int i = 0; i < currentPromptIndex; i++)
+              Row(
+                children: [
+                  Text(
+                    prompts[i] + ' ',
+                    style: GoogleFonts.averiaSerifLibre(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    narrativeOptions[i][_eventController.password.chosenOptions[i]] + '... ',
+                    style: GoogleFonts.averiaSerifLibre(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -223,7 +241,10 @@ class NarrativeOptions extends StatelessWidget {
 
                           /// else if the button is pressed on the last page (meaning the password input is complete)
                           else if (_pageViewController.page.toInt() == prompts.length - 1) {
-                            //TODO: Password complete, gör något här.
+                            if (_eventController.completedPassword) {
+                              _eventController.loading.value = true;
+                              validatePassword(_eventController.email, _eventController.password);
+                            }
                           }
                         },
                       ),
@@ -296,42 +317,6 @@ class StepBackButton extends StatelessWidget {
           ),
           padding: EdgeInsets.only(left: 0, right: 0, top: 4),
         ),
-      );
-    });
-  }
-}
-
-/// A text section with a title and the users currently inputted password.
-class UsersNarrative extends StatelessWidget {
-  final EventController _eventController = Get.find();
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final currentPromptIndex = _eventController.currentPromptIndex.value;
-
-      return Column(
-        children: [
-          for (int i = 0; i < currentPromptIndex; i++)
-            Row(
-              children: [
-                Text(
-                  prompts[i] + ' ',
-                  style: GoogleFonts.averiaSerifLibre(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                Text(
-                  narrativeOptions[i][_eventController.password.chosenOptions[i]] + '... ',
-                  style: GoogleFonts.averiaSerifLibre(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-        ],
       );
     });
   }
