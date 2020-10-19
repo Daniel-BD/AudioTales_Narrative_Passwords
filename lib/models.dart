@@ -3,8 +3,21 @@ import 'package:get/get.dart';
 
 import 'constants.dart';
 
+enum UserFlow {
+  signIn_InputtingPassword,
+  signIn_WrongPassword,
+  signUp_CreatingPassword,
+  signUp_ReviewCreatedPassword,
+  signUp_RepeatPassword,
+  signUp_FailedToRepeatPassword,
+  signUp_RegistrationComplete,
+  loading,
+}
+
 class EventController extends GetxController {
   SignInOrUpEvent _event;
+
+  UserFlow currentStage;
 
   bool get signIn => _event.signIn;
   String get email => _event.email;
@@ -39,6 +52,7 @@ class EventController extends GetxController {
 
   void newEvent(SignInOrUpEvent event) {
     _event = event;
+    currentStage = _event.signIn ? UserFlow.signIn_InputtingPassword : UserFlow.signUp_CreatingPassword;
     update();
   }
 
@@ -106,6 +120,17 @@ class EventController extends GetxController {
       _repeatingCreatedPassword = false;
       update();
     }
+  }
+
+  bool _failedToRepeatPassword = false;
+
+  bool get failedToRepeatPassword {
+    return _failedToRepeatPassword;
+  }
+
+  set failedToRepeatPassword(bool value) {
+    _failedToRepeatPassword = value;
+    update();
   }
 }
 

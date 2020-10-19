@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'constants.dart';
 import 'models.dart';
@@ -54,6 +55,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
               (_eventController.currentPromptIndex.value == prompts.length - 1 && _eventController.finishedPasswordInput);
 
           final repeatingPassword = _eventController.repeatingCreatedPassword;
+          final failedToRepeatPassword = _eventController.failedToRepeatPassword;
 
           return Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -99,52 +101,89 @@ class _PasswordScreenState extends State<PasswordScreen> {
               ),
               finishedPasswordInput && !_eventController.signIn
                   ? ConfirmCreatedPassword()
-                  : Column(
-                      children: [
-                        SizedBox(height: 4),
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: GetBuilder<EventController>(builder: (_) {
-                            final double _pageViewHeight =
-                                max(_eventController.repeatingCreatedPassword ? 380 : 360, MediaQuery.of(context).size.height * 0.4);
+                  : failedToRepeatPassword
+                      ? FailedToRepeatPassword()
+                      : Column(
+                          children: [
+                            SizedBox(height: 4),
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: GetBuilder<EventController>(builder: (_) {
+                                final double _pageViewHeight =
+                                    max(_eventController.repeatingCreatedPassword ? 380 : 360, MediaQuery.of(context).size.height * 0.4);
 
-                            return SizedBox(
-                              height: _pageViewHeight,
-                              child: PageView(
-                                controller: _pageViewController,
-                                physics: NeverScrollableScrollPhysics(),
-                                children: [
-                                  for (int i = 0; i < prompts.length; i++)
-                                    NarrativeOptions(
-                                      promptIndex: i,
-                                      pageViewController: _pageViewController,
-                                      pageTransitionDuration: _pageTransitionDuration,
-                                      pageTransitionCurve: _pageTransitionCurve,
-                                    ),
-                                ],
+                                return SizedBox(
+                                  height: _pageViewHeight,
+                                  child: PageView(
+                                    controller: _pageViewController,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    children: [
+                                      for (int i = 0; i < prompts.length; i++)
+                                        NarrativeOptions(
+                                          promptIndex: i,
+                                          pageViewController: _pageViewController,
+                                          pageTransitionDuration: _pageTransitionDuration,
+                                          pageTransitionCurve: _pageTransitionCurve,
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ),
+                            SmoothPageIndicator(
+                              controller: _pageViewController,
+                              count: 4,
+                              effect: WormEffect(
+                                activeDotColor: indicatorColor,
+                                dotColor: inactiveColor,
                               ),
-                            );
-                          }),
+                            ),
+                            StepBackButton(
+                                pageViewController: _pageViewController,
+                                pageTransitionDuration: _pageTransitionDuration,
+                                pageTransitionCurve: _pageTransitionCurve),
+                            SizedBox(height: 10),
+                          ],
                         ),
-                        SmoothPageIndicator(
-                          controller: _pageViewController,
-                          count: 4,
-                          effect: WormEffect(
-                            activeDotColor: indicatorColor,
-                            dotColor: inactiveColor,
-                          ),
-                        ),
-                        StepBackButton(
-                            pageViewController: _pageViewController,
-                            pageTransitionDuration: _pageTransitionDuration,
-                            pageTransitionCurve: _pageTransitionCurve),
-                        SizedBox(height: 10),
-                      ],
-                    ),
             ],
           );
         }),
       ),
+    );
+  }
+}
+
+/// A sad smiley face and a button to go back to review the created password again.
+class FailedToRepeatPassword extends StatelessWidget {
+  final EventController _eventController = Get.find();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SvgPicture.asset(
+          'assets/sadFace.svg',
+          semanticsLabel: 'Image of a sad smiley face',
+        ),
+        SizedBox(height: 60),
+        Text(
+          letsReviewPasswordAgainText,
+          style: TextStyle(
+            fontSize: 18,
+          ),
+        ),
+        SizedBox(height: 20),
+        AudioTalesWideButton(
+          onPressed: () {
+            _eventController.currentPromptIndex.value = prompts.length - 1;
+            _eventController.failedToRepeatPassword = false;
+          },
+          label: 'Review',
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
+        SizedBox(height: 60),
+      ],
     );
   }
 }
@@ -162,6 +201,7 @@ class UserNarrative extends StatelessWidget {
         var currentPromptIndex = _eventController.currentPromptIndex.value;
         final finishedPasswordInput = (currentPromptIndex == prompts.length - 1 && _eventController.finishedPasswordInput);
         final repeatingPassword = _eventController.repeatingCreatedPassword;
+        final failedToRepeatPassword = _eventController.failedToRepeatPassword;
 
         if (finishedPasswordInput) {
           /// This means the user is on the last prompt and has chosen an alternative.
@@ -173,11 +213,20 @@ class UserNarrative extends StatelessWidget {
         return Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            if (!_signIn && currentPromptIndex == 0 && !repeatingPassword)
+            if (!_signIn && currentPromptIndex == 0 && !repeatingPassword && !failedToRepeatPassword)
               Text(
                 createPasswordInstructionText,
                 style: TextStyle(
                   fontStyle: FontStyle.italic,
+                ),
+              ),
+            if (failedToRepeatPassword)
+              Text(
+                youForgotPasswordText,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.averiaSerifLibre(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             for (int i = 0; i < currentPromptIndex; i++)
@@ -206,6 +255,7 @@ class UserNarrative extends StatelessWidget {
   }
 }
 
+/// When the user has created a password, this widget will let them confirm or change their chosen narrative.
 class ConfirmCreatedPassword extends StatelessWidget {
   final EventController _eventController = Get.find();
 
@@ -223,7 +273,6 @@ class ConfirmCreatedPassword extends StatelessWidget {
         AudioTalesWideButton(
           label: confirmCreatedPasswordButtonText,
           onPressed: () {
-            // TODO: When confirming password, what happens?
             _eventController.repeatingCreatedPassword = true;
           },
           fontSize: 20,
@@ -354,6 +403,7 @@ class _NarrativeOptionsState extends State<NarrativeOptions> {
                               if (_triesLeft <= 0) {
                                 _eventController.clearPassword(clearRepeatingPassword: true);
                                 _eventController.repeatingCreatedPassword = false;
+                                _eventController.failedToRepeatPassword = true;
                                 /*_didNotMatch = false;
                                 _triesLeft = 3;
                                 _wrongGuesses.clear(); */
