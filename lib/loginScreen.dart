@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   /// When pressing button to initiate password input.
   void _onPressedPasswordButton() async {
     String userName = _yourNameTextController.text.trim();
-    String email = _emailTextController.text.trim();
+    String email = _emailTextController.text.trim().toLowerCase();
     bool validEmail = EmailValidator.validate(email);
 
     if (!validEmail) {

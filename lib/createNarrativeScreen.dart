@@ -346,7 +346,7 @@ class RegistrationComplete extends StatelessWidget {
         AudioTalesWideButton(
           label: continueToAudioTalesButtonText,
           onPressed: () {
-            //TODO: Log event
+            logEventToDataBase(LogEvent.signUp_success, _eventController);
             savePassword(_eventController.email, _eventController.userName, _eventController.password);
             Navigator.pushReplacement(
               context,
@@ -508,10 +508,10 @@ class _NarrativeOptionsState extends State<NarrativeOptions> {
                               _didNotMatch = true;
                               _triesLeft--;
                               _wrongGuesses.add(option);
+                              logEventToDataBase(LogEvent.signUp_failedToRepeat, _eventController);
                               if (_triesLeft <= 0) {
                                 debugPrint('Failed to repeat password');
                                 _eventController.moveToUserFlow(UserFlow.signUp_FailedToRepeatPassword);
-                                //TODO: Logga att användaren inte lyckades minnas lösenordet...
                               }
                             });
                             return;
@@ -540,6 +540,7 @@ class _NarrativeOptionsState extends State<NarrativeOptions> {
 
                                 debugPrint('Valid password: $validPassword');
                                 if (validPassword) {
+                                  logEventToDataBase(LogEvent.login_success, _eventController);
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
@@ -547,6 +548,7 @@ class _NarrativeOptionsState extends State<NarrativeOptions> {
                                     ),
                                   );
                                 } else {
+                                  await logEventToDataBase(LogEvent.login_failed, _eventController);
                                   _eventController.moveToUserFlow(UserFlow.signIn_WrongPassword);
                                   // TODO: Show the user feedback that the signIn attempt failed.
                                 }

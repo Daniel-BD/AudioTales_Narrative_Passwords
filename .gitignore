@@ -77,3 +77,4 @@ lib/generated_plugin_registrant.dart
 ios/Flutter/Debug.xcconfig
 ios/Flutter/Debug.xcconfig
 ios/Flutter/Release.xcconfig
+lib/privateKey.dart
