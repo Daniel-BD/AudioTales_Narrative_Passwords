@@ -8,6 +8,7 @@ import 'createNarrativeScreen.dart';
 import 'constants.dart';
 import 'models.dart';
 import 'widget_components/AudioTalesComponents.dart';
+import 'backend.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -23,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _yourNameTextController = TextEditingController();
 
   /// When pressing button to initiate password input.
-  void _onPressedPasswordButton() {
+  void _onPressedPasswordButton() async {
     String userName = _yourNameTextController.text.trim();
     String email = _emailTextController.text.trim();
     bool validEmail = EmailValidator.validate(email);
@@ -32,6 +33,14 @@ class _LoginScreenState extends State<LoginScreen> {
       //TODO: feedback to user
       debugPrint('Invalid Email');
       return;
+    }
+
+    if (_signIn) {
+      final hasAccount = await emailHasAccount(email);
+      if (!hasAccount) {
+        debugPrint('No account with that email exists');
+        return;
+      }
     }
 
     /// If the user is signing in with an existing account, we only need to validate that the email is a valid email address.
@@ -143,7 +152,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 color: primaryColor,
-                                //borderRadius: BorderRadius.circular(4),
                                 minSize: 44,
                                 padding: EdgeInsets.all(0),
                                 onPressed: () => _onPressedPasswordButton(),

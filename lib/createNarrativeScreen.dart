@@ -12,6 +12,48 @@ import 'myBooksScreen.dart';
 import 'backend.dart';
 import 'widget_components/AudioTalesComponents.dart';
 
+class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
+  @override
+  final Size preferredSize = const Size.fromHeight(56.0);
+
+  final EventController _eventController = Get.find();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          CupertinoButton(
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: destructiveColor),
+            ),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          Text(
+            _eventController.signIn ? signInPasswordHeadline : createPasswordHeadline,
+            style: GoogleFonts.averiaSerifLibre(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Visibility(
+            visible: false,
+            maintainAnimation: true,
+            maintainState: true,
+            maintainSize: true,
+            child: CupertinoButton(
+              child: Text('Cancel'),
+              onPressed: () {},
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class PasswordScreen extends StatefulWidget {
   @override
   _PasswordScreenState createState() => _PasswordScreenState();
@@ -30,38 +72,23 @@ class _PasswordScreenState extends State<PasswordScreen> {
     final double _userNarrativeWidth = min(400, MediaQuery.of(context).size.width - 16);
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          _eventController.signIn ? signInPasswordHeadline : createPasswordHeadline,
-          style: GoogleFonts.averiaSerifLibre(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        leading: CupertinoButton(
-          child: Icon(
-            CupertinoIcons.clear_thick,
-            size: 30,
-            color: destructiveColor,
-          ),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-      ),
+      appBar: MyAppBar(),
       body: SafeArea(
         child: GetBuilder<EventController>(builder: (_) {
-          final finishedPasswordInput =
-              (_eventController.currentPromptIndex.value == prompts.length - 1 && _eventController.finishedPasswordInput);
-
-          final repeatingPassword = _eventController.repeatingCreatedPassword;
-          final failedToRepeatPassword = _eventController.failedToRepeatPassword;
+          final userFlow = _eventController.currentStage;
 
           return Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (!_eventController.signIn && _eventController.finishedPasswordInput && !_eventController.repeatingCreatedPassword)
+              if (userFlow == UserFlow.signUp_ReviewCreatedPassword ||
+                  userFlow == UserFlow.signUp_FailedToRepeatPassword ||
+                  userFlow == UserFlow.signUp_RegistrationComplete ||
+                  userFlow == UserFlow.signIn_WrongPassword)
                 AudioTalesLogo(),
+              if (userFlow == UserFlow.signUp_RegistrationComplete)
+                Expanded(
+                  child: RegistrationComplete(),
+                ),
               Flexible(
                 child: SizedBox(
                   width: _userNarrativeWidth,
@@ -77,20 +104,45 @@ class _PasswordScreenState extends State<PasswordScreen> {
                           controller: _scrollController,
                           child: Column(
                             children: [
-                              if (finishedPasswordInput && !_eventController.signIn || repeatingPassword)
+                              if (userFlow == UserFlow.signUp_ReviewCreatedPassword)
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 20),
                                   child: Text(
-                                    repeatingPassword ? repeatPasswordToConfirm : yourCreatedStoryText,
+                                    reviewCreatedStoryHeadline,
                                     style: GoogleFonts.averiaSerifLibre(
-                                      fontSize: repeatingPassword ? 17 : 24,
+                                      fontSize: 24,
                                       fontWeight: FontWeight.w500,
                                     ),
-                                    textAlign: repeatingPassword ? TextAlign.center : null,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              if (userFlow == UserFlow.signUp_RepeatingPassword)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 20),
+                                  child: Text(
+                                    repeatPasswordToConfirm,
+                                    style: GoogleFonts.averiaSerifLibre(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               SizedBox(height: 10),
-                              UserNarrative(),
+                              if (userFlow == UserFlow.signIn_InputtingPassword ||
+                                  userFlow == UserFlow.signUp_CreatingPassword ||
+                                  userFlow == UserFlow.signUp_ReviewCreatedPassword ||
+                                  userFlow == UserFlow.signUp_RepeatingPassword)
+                                UserNarrative(),
+                              if (userFlow == UserFlow.signUp_FailedToRepeatPassword || userFlow == UserFlow.signIn_WrongPassword)
+                                Text(
+                                  youForgotPasswordText,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.averiaSerifLibre(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -99,52 +151,53 @@ class _PasswordScreenState extends State<PasswordScreen> {
                   }),
                 ),
               ),
-              finishedPasswordInput && !_eventController.signIn
-                  ? ConfirmCreatedPassword()
-                  : failedToRepeatPassword
-                      ? FailedToRepeatPassword()
-                      : Column(
-                          children: [
-                            SizedBox(height: 4),
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: GetBuilder<EventController>(builder: (_) {
-                                final double _pageViewHeight =
-                                    max(_eventController.repeatingCreatedPassword ? 380 : 360, MediaQuery.of(context).size.height * 0.4);
+              if (userFlow == UserFlow.signUp_ReviewCreatedPassword) ReviewCreatedPassword(),
+              if (userFlow == UserFlow.signUp_FailedToRepeatPassword || userFlow == UserFlow.signIn_WrongPassword) IncorrectPassword(),
+              if (userFlow == UserFlow.signIn_InputtingPassword ||
+                  userFlow == UserFlow.signUp_CreatingPassword ||
+                  userFlow == UserFlow.signUp_RepeatingPassword)
+                Column(
+                  children: [
+                    SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: GetBuilder<EventController>(builder: (_) {
+                        final double _pageViewHeight =
+                            max(userFlow == UserFlow.signUp_RepeatingPassword ? 380 : 360, MediaQuery.of(context).size.height * 0.4);
 
-                                return SizedBox(
-                                  height: _pageViewHeight,
-                                  child: PageView(
-                                    controller: _pageViewController,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    children: [
-                                      for (int i = 0; i < prompts.length; i++)
-                                        NarrativeOptions(
-                                          promptIndex: i,
-                                          pageViewController: _pageViewController,
-                                          pageTransitionDuration: _pageTransitionDuration,
-                                          pageTransitionCurve: _pageTransitionCurve,
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                            ),
-                            SmoothPageIndicator(
-                              controller: _pageViewController,
-                              count: 4,
-                              effect: WormEffect(
-                                activeDotColor: indicatorColor,
-                                dotColor: inactiveColor,
-                              ),
-                            ),
-                            StepBackButton(
-                                pageViewController: _pageViewController,
-                                pageTransitionDuration: _pageTransitionDuration,
-                                pageTransitionCurve: _pageTransitionCurve),
-                            SizedBox(height: 10),
-                          ],
-                        ),
+                        return SizedBox(
+                          height: _pageViewHeight,
+                          child: PageView(
+                            controller: _pageViewController,
+                            physics: NeverScrollableScrollPhysics(),
+                            children: [
+                              for (int i = 0; i < prompts.length; i++)
+                                NarrativeOptions(
+                                  promptIndex: i,
+                                  pageViewController: _pageViewController,
+                                  pageTransitionDuration: _pageTransitionDuration,
+                                  pageTransitionCurve: _pageTransitionCurve,
+                                ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ),
+                    SmoothPageIndicator(
+                      controller: _pageViewController,
+                      count: 4,
+                      effect: WormEffect(
+                        activeDotColor: indicatorColor,
+                        dotColor: inactiveColor,
+                      ),
+                    ),
+                    StepBackButton(
+                        pageViewController: _pageViewController,
+                        pageTransitionDuration: _pageTransitionDuration,
+                        pageTransitionCurve: _pageTransitionCurve),
+                    SizedBox(height: 10),
+                  ],
+                ),
             ],
           );
         }),
@@ -153,36 +206,64 @@ class _PasswordScreenState extends State<PasswordScreen> {
   }
 }
 
-/// A sad smiley face and a button to go back to review the created password again.
-class FailedToRepeatPassword extends StatelessWidget {
+/// A sad smiley face and a button to go either 1. back to review the created password again, if event is signUp. 2. go back to login screen.
+class IncorrectPassword extends StatelessWidget {
   final EventController _eventController = Get.find();
 
   @override
   Widget build(BuildContext context) {
+    final userFlow = _eventController.currentStage;
+
     return Column(
       children: [
         SvgPicture.asset(
           'assets/sadFace.svg',
           semanticsLabel: 'Image of a sad smiley face',
         ),
-        SizedBox(height: 60),
-        Text(
-          letsReviewPasswordAgainText,
-          style: TextStyle(
-            fontSize: 18,
+        if (userFlow == UserFlow.signUp_FailedToRepeatPassword)
+          Column(
+            children: [
+              SizedBox(height: 60),
+              Text(
+                letsReviewPasswordAgainText,
+                style: TextStyle(
+                  fontSize: 18,
+                ),
+              ),
+              SizedBox(height: 20),
+            ],
           ),
-        ),
-        SizedBox(height: 20),
+        if (userFlow == UserFlow.signIn_WrongPassword) SizedBox(height: 80),
         AudioTalesWideButton(
           onPressed: () {
-            _eventController.currentPromptIndex.value = prompts.length - 1;
-            _eventController.failedToRepeatPassword = false;
+            switch (userFlow) {
+              case UserFlow.signIn_WrongPassword:
+                Navigator.of(context).pop();
+                break;
+              case UserFlow.signUp_FailedToRepeatPassword:
+                _eventController.moveToUserFlow(UserFlow.signUp_ReviewCreatedPassword);
+                break;
+              default:
+                break;
+            }
           },
-          label: 'Review',
+          label: userFlow == UserFlow.signIn_WrongPassword ? 'Return' : 'Review',
           fontSize: 20,
           fontWeight: FontWeight.w700,
         ),
         SizedBox(height: 60),
+        if (userFlow == UserFlow.signIn_WrongPassword)
+          CupertinoButton(
+            child: Text(
+              'Forgot password?',
+              style: TextStyle(
+                color: primaryColor,
+              ),
+            ),
+            onPressed: () {
+              throw UnimplementedError();
+            },
+          ),
       ],
     );
   }
@@ -194,43 +275,32 @@ class UserNarrative extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _signIn = _eventController.signIn;
-
     return GetBuilder<EventController>(
       builder: (eventController) {
         var currentPromptIndex = _eventController.currentPromptIndex.value;
-        final finishedPasswordInput = (currentPromptIndex == prompts.length - 1 && _eventController.finishedPasswordInput);
-        final repeatingPassword = _eventController.repeatingCreatedPassword;
-        final failedToRepeatPassword = _eventController.failedToRepeatPassword;
+        final userFlow = _eventController.currentStage;
 
-        if (finishedPasswordInput) {
+        if (userFlow == UserFlow.signUp_ReviewCreatedPassword) {
           /// This means the user is on the last prompt and has chosen an alternative.
           currentPromptIndex++;
         }
 
-        final fontSize = finishedPasswordInput /*&& !repeatingPassword*/ ? 18.0 : 16.0;
+        final fontSize = userFlow == UserFlow.signUp_ReviewCreatedPassword ? 18.0 : 16.0;
 
         return Column(
           mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!_signIn && currentPromptIndex == 0 && !repeatingPassword && !failedToRepeatPassword)
+            if (userFlow == UserFlow.signUp_CreatingPassword && currentPromptIndex == 0)
               Text(
                 createPasswordInstructionText,
                 style: TextStyle(
                   fontStyle: FontStyle.italic,
                 ),
               ),
-            if (failedToRepeatPassword)
-              Text(
-                youForgotPasswordText,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.averiaSerifLibre(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
             for (int i = 0; i < currentPromptIndex; i++)
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     prompts[i] + ' ',
@@ -255,8 +325,46 @@ class UserNarrative extends StatelessWidget {
   }
 }
 
+/// A text explaining that registration is complete, a 'done' icon and a button to continue.
+class RegistrationComplete extends StatelessWidget {
+  final EventController _eventController = Get.find();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          registrationCompleteText,
+          style: GoogleFonts.averiaSerifLibre(fontSize: 20),
+          textAlign: TextAlign.center,
+        ),
+        SvgPicture.asset(
+          'assets/doneIcon.svg',
+          semanticsLabel: 'A large check mark image',
+        ),
+        AudioTalesWideButton(
+          label: continueToAudioTalesButtonText,
+          onPressed: () {
+            //TODO: Log event
+            savePassword(_eventController.email, _eventController.userName, _eventController.password);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MyBooksScreen(),
+              ),
+            );
+          },
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
+      ],
+    );
+  }
+}
+
 /// When the user has created a password, this widget will let them confirm or change their chosen narrative.
-class ConfirmCreatedPassword extends StatelessWidget {
+class ReviewCreatedPassword extends StatelessWidget {
   final EventController _eventController = Get.find();
 
   @override
@@ -273,7 +381,7 @@ class ConfirmCreatedPassword extends StatelessWidget {
         AudioTalesWideButton(
           label: confirmCreatedPasswordButtonText,
           onPressed: () {
-            _eventController.repeatingCreatedPassword = true;
+            _eventController.moveToUserFlow(UserFlow.signUp_RepeatingPassword);
           },
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -290,7 +398,7 @@ class ConfirmCreatedPassword extends StatelessWidget {
             ),
           ),
           onPressed: () {
-            _eventController.clearPassword();
+            _eventController.moveToUserFlow(UserFlow.signUp_CreatingPassword);
           },
         ),
         SizedBox(height: 20),
@@ -333,7 +441,7 @@ class _NarrativeOptionsState extends State<NarrativeOptions> {
   @override
   Widget build(BuildContext context) {
     final double componentWidth = min(340, MediaQuery.of(context).size.width - 64);
-    final repeatingPassword = _eventController.repeatingCreatedPassword;
+    final userFlow = _eventController.currentStage;
     final currentPromptIndex = _eventController.currentPromptIndex.value;
 
     return Align(
@@ -341,7 +449,7 @@ class _NarrativeOptionsState extends State<NarrativeOptions> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (repeatingPassword)
+          if (userFlow == UserFlow.signUp_RepeatingPassword)
             Visibility(
               visible: _didNotMatch,
               maintainSize: true,
@@ -389,7 +497,7 @@ class _NarrativeOptionsState extends State<NarrativeOptions> {
                           final result = _eventController.addNarrativeOption(
                             widget.promptIndex,
                             narrativeOptions[widget.promptIndex].indexOf(option),
-                            isRepeatingPassword: repeatingPassword,
+                            isRepeatingPassword: userFlow == UserFlow.signUp_RepeatingPassword,
                           );
 
                           if (result) {
@@ -401,15 +509,12 @@ class _NarrativeOptionsState extends State<NarrativeOptions> {
                               _triesLeft--;
                               _wrongGuesses.add(option);
                               if (_triesLeft <= 0) {
-                                _eventController.clearPassword(clearRepeatingPassword: true);
-                                _eventController.repeatingCreatedPassword = false;
-                                _eventController.failedToRepeatPassword = true;
-                                /*_didNotMatch = false;
-                                _triesLeft = 3;
-                                _wrongGuesses.clear(); */
-                                //TODO: Här ska man komma till review. Vore bra att kunna logga att användaren inte lyckades minnas lösenordet...
+                                debugPrint('Failed to repeat password');
+                                _eventController.moveToUserFlow(UserFlow.signUp_FailedToRepeatPassword);
+                                //TODO: Logga att användaren inte lyckades minnas lösenordet...
                               }
                             });
+                            return;
                           }
 
                           /// If the button is pressed on any page that isn't the last page
@@ -424,28 +529,37 @@ class _NarrativeOptionsState extends State<NarrativeOptions> {
                           /// else if the button is pressed on the last page (meaning the password input is complete)
                           else if (widget._pageViewController.page.toInt() == prompts.length - 1) {
                             if (_eventController.finishedPasswordInput) {
-                              _eventController.loading.value = true;
+                              //_eventController.loading.value = true;
+                              //TODO: loading stuff
 
                               /// If this is a sign in event
                               if (_eventController.signIn) {
                                 final validPassword = await validatePassword(_eventController.email, _eventController.password);
-                                _eventController.loading.value = false;
+                                //_eventController.loading.value = false;
+                                //TODO: loading stuff
 
+                                debugPrint('Valid password: $validPassword');
                                 if (validPassword) {
-                                  Navigator.push(
+                                  Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => MyBooksScreen(),
                                     ),
                                   );
                                 } else {
+                                  _eventController.moveToUserFlow(UserFlow.signIn_WrongPassword);
                                   // TODO: Show the user feedback that the signIn attempt failed.
                                 }
                               }
 
-                              /// else this is a 'create new account' event
-                              else {
-                                //TODO: create new account name, store password here?
+                              /// else this is a 'create new account' event and the user just finished creating their password
+                              else if (userFlow == UserFlow.signUp_CreatingPassword) {
+                                _eventController.moveToUserFlow(UserFlow.signUp_ReviewCreatedPassword);
+                              }
+
+                              /// when a user has completed the last step of registration process
+                              else if (userFlow == UserFlow.signUp_RepeatingPassword) {
+                                _eventController.moveToUserFlow(UserFlow.signUp_RegistrationComplete);
                               }
                             }
                           }
@@ -485,10 +599,10 @@ class StepBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final currentPromptIndex = _eventController.currentPromptIndex.value;
-      final repeatingPassword = _eventController.repeatingCreatedPassword;
+      final userFlow = _eventController.currentStage;
 
       return Visibility(
-        visible: currentPromptIndex > 0 && !repeatingPassword,
+        visible: currentPromptIndex > 0 && userFlow != UserFlow.signUp_RepeatingPassword,
         maintainSize: true,
         maintainAnimation: true,
         maintainState: true,

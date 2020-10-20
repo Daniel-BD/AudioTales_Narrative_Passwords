@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'loginScreen.dart';
 import 'constants.dart';
+import 'backend.dart';
 
 void main() {
   runApp(MyApp());
@@ -11,6 +12,8 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    fetchSpreadsheet();
+
     return GetMaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,

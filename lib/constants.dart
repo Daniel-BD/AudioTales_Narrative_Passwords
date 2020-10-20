@@ -31,7 +31,7 @@ const createPasswordScreenTitle = 'Create Password';
 const signInPasswordHeadline = 'Tell your Story';
 const createPasswordHeadline = 'Create your Story';
 
-const yourCreatedStoryText = 'Your created story is:';
+const reviewCreatedStoryHeadline = 'Your created story is:';
 const isPasswordCorrectQuestionText = 'Do you want this as password?';
 const confirmCreatedPasswordButtonText = 'Yes';
 const regretCreatedPasswordButtonText = 'No, let me create another one';
@@ -41,9 +41,10 @@ const triesLeftText = 'tries left.';
 
 const createPasswordInstructionText =
     'You will now create your own narrative password! It is a simple process, really.\n\nFor each prompt you are presented, there will be a number of alternatives available to build on to the story. Choose an alternative to create YOUR story and to proceed to the next section.\n\nAt the end you can see your entire story, and this will be your narrative password to memorize!\n';
-
 const youForgotPasswordText = 'Oh no!\nIt seems like you have forgotten your narrative password.';
 const letsReviewPasswordAgainText = 'Let\'s review it again!';
+const registrationCompleteText = 'Great!\nYour registration is now complete!';
+const continueToAudioTalesButtonText = 'Continue to AudioTales';
 
 const List<String> prompts = [
   'Once upon a time',

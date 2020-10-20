@@ -8,18 +8,16 @@ enum UserFlow {
   signIn_WrongPassword,
   signUp_CreatingPassword,
   signUp_ReviewCreatedPassword,
-  signUp_RepeatPassword,
+  signUp_RepeatingPassword,
   signUp_FailedToRepeatPassword,
   signUp_RegistrationComplete,
-  loading,
 }
 
 class EventController extends GetxController {
   SignInOrUpEvent _event;
 
   UserFlow currentStage;
-
-  bool get signIn => _event.signIn;
+  bool get signIn => currentStage == UserFlow.signIn_InputtingPassword || currentStage == UserFlow.signIn_WrongPassword;
   String get email => _event.email;
   String get userName => _event.userName;
   NarrativePassword get password => _event.password;
@@ -33,7 +31,70 @@ class EventController extends GetxController {
   RxInt currentPromptIndex = 0.obs;
 
   /// Whether some 'loading' action is taking place, such as talking to server to validate password.
-  RxBool loading = false.obs;
+  //RxBool loading = false.obs;
+
+  void moveToUserFlow(UserFlow goTo) {
+    debugPrint('moving to: ' + goTo.toString());
+    switch (currentStage) {
+      case UserFlow.signIn_InputtingPassword:
+        if (goTo == UserFlow.signIn_WrongPassword) {
+          currentPromptIndex.value = 0;
+          _clearPassword();
+          currentStage = goTo;
+          update();
+        } else {
+          debugPrint('Invalid UserFlow path: from: $currentStage to: $goTo');
+        }
+        break;
+      case UserFlow.signIn_WrongPassword:
+        debugPrint('Invalid UserFlow path: from: $currentStage to: $goTo');
+        break;
+      case UserFlow.signUp_CreatingPassword:
+        if (goTo == UserFlow.signUp_ReviewCreatedPassword) {
+          currentStage = goTo;
+          update();
+        } else {
+          debugPrint('Invalid UserFlow path: from: $currentStage to: $goTo');
+        }
+        break;
+      case UserFlow.signUp_ReviewCreatedPassword:
+        if (goTo == UserFlow.signUp_CreatingPassword || goTo == UserFlow.signUp_RepeatingPassword) {
+          if (goTo == UserFlow.signUp_CreatingPassword) {
+            _clearPassword();
+          }
+          currentPromptIndex.value = 0;
+          currentStage = goTo;
+          update();
+        } else {
+          debugPrint('Invalid UserFlow path: from: $currentStage to: $goTo');
+        }
+        break;
+      case UserFlow.signUp_RepeatingPassword:
+        if (goTo == UserFlow.signUp_FailedToRepeatPassword || goTo == UserFlow.signUp_RegistrationComplete) {
+          if (goTo == UserFlow.signUp_FailedToRepeatPassword) {
+            _clearPassword(clearRepeatingPassword: true);
+          }
+          currentStage = goTo;
+          currentPromptIndex.value = 0;
+          update();
+        } else {
+          debugPrint('Invalid UserFlow path: from: $currentStage to: $goTo');
+        }
+        break;
+      case UserFlow.signUp_FailedToRepeatPassword:
+        if (goTo == UserFlow.signUp_ReviewCreatedPassword) {
+          currentPromptIndex.value = prompts.length - 1;
+          currentStage = goTo;
+          update();
+        } else {
+          debugPrint('Invalid UserFlow path: from: $currentStage to: $goTo');
+        }
+        break;
+      case UserFlow.signUp_RegistrationComplete:
+        debugPrint('Invalid UserFlow path: from: $currentStage to: $goTo');
+        break;
+    }
+  }
 
   void stepForwardPrompt() {
     if (currentPromptIndex < narrativeOptions.length - 1) {
@@ -81,7 +142,7 @@ class EventController extends GetxController {
 
   /// Clears the currently made password options. Example usage is when a newly created password is to be confirmed and the user
   /// doesn't want to keep the created password, then this can be used to fully clear it.
-  void clearPassword({bool clearRepeatingPassword = false}) {
+  void _clearPassword({bool clearRepeatingPassword = false}) {
     currentPromptIndex.value = 0;
 
     if (clearRepeatingPassword) {
@@ -98,7 +159,7 @@ class EventController extends GetxController {
   }
 
   /// Whether the user is currently trying to repeat the created password.
-  bool _repeatingCreatedPassword = false;
+  /*bool _repeatingCreatedPassword = false;
 
   bool get repeatingCreatedPassword {
     if (finishedPasswordInput && _repeatingCreatedPassword) {
@@ -131,7 +192,7 @@ class EventController extends GetxController {
   set failedToRepeatPassword(bool value) {
     _failedToRepeatPassword = value;
     update();
-  }
+  }*/
 }
 
 class SignInOrUpEvent {
