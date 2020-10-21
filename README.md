@@ -1,4 +1,4 @@
-# AudioTales is a fictional audio books service that uses stories instead of traditional passwords to sign in with.
+# AudioTales is a fictional audio books service that uses stories instead of traditional passwords.
 
 Read more about the project on the **project website**: https://rithikakabilan.wixsite.com/ciu196
 
