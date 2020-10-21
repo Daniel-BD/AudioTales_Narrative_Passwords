@@ -14,9 +14,12 @@ enum LogEvent {
 }
 
 Future<void> logEventToDataBase(LogEvent eventType, EventController event) async {
-  final gsheets = GSheets(credentials);
+  /// TODO: If you want to have the google sheets database functionality, add your own credentials in privatekey.dart
+  return;
+
+  final gsheets = GSheets(putYourCredentialsHere);
   // fetch spreadsheet by its id
-  final ss = await gsheets.spreadsheet(spreadsheetId);
+  final ss = await gsheets.spreadsheet(putYourSpreadsheetIdHere);
   // get worksheet by its title
   final sheet = ss.worksheetByTitle('Sheet1');
 
