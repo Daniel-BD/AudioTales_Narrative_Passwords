@@ -27,7 +27,10 @@ The project will run just as normal without adding your own credentials, expect 
 You can see my Google sheet document here: https://docs.google.com/spreadsheets/d/1WaJhs3jpcphsg2IyCmfCu86ghtRcgDOuDWZ-kMuZtyA/ 
 However, you cannot add events to it (unless using the .apk file). This is because using it requires some private keys, which you should never share in a public repo. 
 
-If you want to test it yourself, follow this tutorial to get your own Google API credentials: https://medium.com/@a.marenkov/how-to-get-credentials-for-google-sheets-456b7e88c430 then replace the empty credentials in privateKey.dart with your own. Here's a tutorial on how to ADD the credentials to the project after you've gotten them: https://itnext.io/dart-working-with-google-sheets-793ed322daa0. 
+If you want to test it yourself, follow this tutorial to get your own Google API credentials: https://medium.com/@a.marenkov/how-to-get-credentials-for-google-sheets-456b7e88c430 then replace the empty credentials in privateKey.dart (found in the **lib folder**) with your own. Here's a tutorial on how to ADD the credentials to the project after you've gotten them: https://itnext.io/dart-working-with-google-sheets-793ed322daa0. 
+
+### I just want to look at the code, where is the code you've written for this project?
+All code that is relevant to this project is found inside the **lib** folder and ends with .dart (since it's written in the Dart programming language).
 
 
  
