@@ -11,7 +11,7 @@ See an introduction video to the project here:
 ### How to install and run:
 
 Android:
-For Android, there is a pre-compiled .apk file (called 'android_install_file.apk' at the root of the repo) you can download and install directly.
+For Android, there is a pre-compiled .apk file (called 'android_install_file.apk' at the root of the repo) you can download and install directly. The app will be called 'narrative_passwords' on your phone.
 
 iOS:
 On iOS you have to build the project yourself.
